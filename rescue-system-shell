@@ -31,22 +31,20 @@ class Main:
             return 1
 
         # get storage layout for target system
-        layout = strict_hdds.get_current_storage_layout()
+        layout = strict_hdds.detect_and_mount_storage_layout("/mnt/gentoo")
         if layout is None:
             print("Error: Invalid storage layout.")
             return 1
 
         if layout.name == "bios-ext4":
             bootDev = None
-        elif layout.name in ["efi-ext4", "efi-bcache-lvm-ext4"]:
+        elif layout.name in ["efi-ext4", "efi-bcache-lvm-ext4", "efi-bcachfs"]:
             bootDev = layout.get_esp()
         else:
             assert False
 
         # mount directories (layer 1)
-        mountList = [
-            ("/mnt/gentoo", "%s /mnt/gentoo" % (layout.dev_rootfs)),
-        ]
+        mountList = []
         with _DirListMount(mountList):
             if not _Util.isGentooRootDir("/mnt/gentoo"):
                 print("Error: Invalid content in root device %s" % (layout.dev_rootfs))
@@ -64,10 +62,6 @@ class Main:
             #     mountList += [
             #         ("/mnt/gentoo/sys/firmware/efi/efivars", "-t efivarfs -o nosuid,noexec,nodev /mnt/gentoo/sys/firmware/efi/efivars"),
             #     ]
-            if bootDev is not None:
-                mountList += [
-                    ("/mnt/gentoo/boot", "%s /mnt/gentoo/boot" % (bootDev)),
-                ]
             with _DirListMount(mountList):
                 os.makedirs("/mnt/gentoo/run/udev", exist_ok=True)
 
