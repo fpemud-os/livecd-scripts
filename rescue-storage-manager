@@ -30,7 +30,6 @@ class Main:
             return 0
 
         if self.args.op == "wipe-all":
-            _Util.cmdCall("/sbin/lvm", "vgchange", "-an")
             for devpath in _Util.getDevPathListForFixedHdd():
                 print("Wipe harddisk %s" % (devpath))
                 _Util.wipeHarddisk(devpath)
@@ -64,7 +63,7 @@ class Main:
             print("Storage layout: empty")
             return 1
 
-        if layout.name == "efi-bcache-lvm-ext4":
+        if layout.name == "efi-bcachefs":
             if layout.get_ssd() is not None:
                 ssdStr = layout.get_ssd()
                 if layout.get_ssd_swap_partition() is not None:
@@ -76,7 +75,30 @@ class Main:
                 ssdStr = "None"
                 swapStr = ""
                 bootDiskStr = " (boot disk: %s)" % (layout.boot_disk)
-            print("Storage layout: %s, SSD: %s%s, LVM PVs: %s%s" % (layout.name, ssdStr, swapStr, " ".join(layout.get_hdd_list()), bootDiskStr))
+            print("Storage layout: %s, SSD: %s%s, HDDs: %s%s" % (layout.name, ssdStr, swapStr, " ".join(layout.get_hdd_list()), bootDiskStr))
+            return 0
+
+        if layout.name == "efi-bcache-btrfs":
+            if layout.get_ssd() is not None:
+                ssdStr = layout.get_ssd()
+                if layout.get_ssd_swap_partition() is not None:
+                    swapStr = "(with swap)"
+                else:
+                    swapStr = ""
+                bootDiskStr = ""
+            else:
+                ssdStr = "None"
+                swapStr = ""
+                bootDiskStr = " (boot disk: %s)" % (layout.boot_disk)
+            print("Storage layout: %s, SSD: %s%s, HDDs: %s%s" % (layout.name, ssdStr, swapStr, " ".join(layout.get_hdd_list()), bootDiskStr))
+            return 0
+
+        if layout.name == "efi-btrfs":
+            if layout.get_ssd() is not None:
+                bootDiskStr = ""
+            else:
+                bootDiskStr = " (boot disk: %s)" % (layout.boot_disk)
+            print("Storage layout: %s, HDDs: %s%s" % (layout.name, " ".join(layout.get_hdd_list()), bootDiskStr))
             return 0
 
         if layout.name == "efi-ext4":
@@ -109,7 +131,13 @@ class Main:
         elif self.args.layout_name == "efi-ext4":
             print("Root device: %s" % (layout.dev_rootfs))
             print("Swap file: None")
-        elif self.args.layout_name == "efi-bache-lvm":
+        elif self.args.layout_name == "efi-btrfs":
+            print("Root device: %s" % (layout.dev_rootfs))
+        elif self.args.layout_name == "efi-bache-btrfs":
+            print("Root device: %s" % (layout.dev_rootfs))
+            print("Swap device: %s" % (layout.dev_swap if layout.dev_swap is not None else "None"))
+            print("Boot disk: %s" % (layout.get_esp()))
+        elif self.args.layout_name == "efi-bcachefs":
             print("Root device: %s" % (layout.dev_rootfs))
             print("Swap device: %s" % (layout.dev_swap if layout.dev_swap is not None else "None"))
             print("Boot disk: %s" % (layout.get_esp()))
