@@ -58,7 +58,7 @@ class Main:
         return parser
 
     def _cmdShow(self):
-        layout = strict_hdds.get_current_storage_layout()
+        layout = strict_hdds.get_current_storage_layout("/mnt/gentoo")
         if layout is None:
             print("Storage layout: empty")
             return 1
