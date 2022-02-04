@@ -22,12 +22,9 @@ class Main:
         # another instance is running?
         pass
 
-        # /mnt/gentoo or /mnt/gentoo/boot is mounted
+        # /mnt/gentoo is mounted
         if _Util.isMountPoint("/mnt/gentoo"):
             print("Error: /mnt/gentoo should not be mounted")
-            return 1
-        if _Util.isMountPoint("/mnt/gentoo/boot"):
-            print("Error: /mnt/gentoo/boot should not be mounted")
             return 1
 
         # get storage layout for target system
@@ -35,22 +32,12 @@ class Main:
         if layout is None:
             print("Error: Invalid storage layout.")
             return 1
-
-        if layout.name == "bios-ext4":
-            bootDev = None
-        elif layout.name in ["efi-ext4", "efi-btrfs", "efi-bcache-btrfs", "efi-bcachfs"]:
-            bootDev = layout.get_esp()
-        else:
-            assert False
-
-        # mount directories (layer 1)
-        mountList = []
-        with _DirListMount(mountList):
+        try:
             if not _Util.isGentooRootDir("/mnt/gentoo"):
                 print("Error: Invalid content in root device %s" % (layout.dev_rootfs))
                 return 1
 
-            # mount directories (layer 2)
+            # mount directories (layer 1)
             mountList = [
                 ("/mnt/gentoo/proc", "-t proc -o nosuid,noexec,nodev proc /mnt/gentoo/proc"),
                 ("/mnt/gentoo/sys", "--rbind /sys /mnt/gentoo/sys", "--make-rslave /mnt/gentoo/sys"),
@@ -65,7 +52,7 @@ class Main:
             with _DirListMount(mountList):
                 os.makedirs("/mnt/gentoo/run/udev", exist_ok=True)
 
-                # mount directories (layer 3)
+                # mount directories (layer 2)
                 mountList = [
                     ("/mnt/gentoo/run/udev", "--rbind /run/udev /mnt/gentoo/run/udev", "--make-rslave /mnt/gentoo/run/udev"),
                 ]
@@ -74,6 +61,8 @@ class Main:
                     with _FakeUsrSrcLinuxDirectory(prefix="/mnt/gentoo"):
                         with _CopyResolvConf("/etc/resolv.conf", "/mnt/gentoo"):
                             subprocess.run("FPEMUD_OS_SETUP=1 /usr/bin/chroot /mnt/gentoo /bin/sh", shell=True)
+        finally:
+            layout.umount_and_dispose()
 
         return 0
 
