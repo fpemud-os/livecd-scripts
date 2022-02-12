@@ -58,7 +58,7 @@ class Main:
         return parser
 
     def _cmdShow(self):
-        layout = strict_hdds.get_current_storage_layout("/mnt/gentoo")
+        layout = strict_hdds.get_storage_layout("/mnt/gentoo")
         if layout is None:
             print("Storage layout: empty")
             return 1
@@ -120,7 +120,7 @@ class Main:
         assert False
 
     def _cmdCreate(self):
-        if self.args.layout_name not in strict_hdds.get_supported_storage_layouts():
+        if self.args.layout_name not in strict_hdds.get_supported_storage_layout_names():
             print("Invalid storage layout!")
             return 1
 
